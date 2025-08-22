@@ -1614,9 +1614,13 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
   <script>
-    // --- DATA SOURCE ---
-    const rawData = {};
+    // --- DATA SOURCE (MODIFIED) ---
+    // Changed from 'const' to 'let' to allow data to be loaded from postMessage
+    let rawData = {};
+
     // --- GLOBAL VARIABLES & CONSTANTS ---
     const STADIA_API_KEY = '456a0161-7a8c-4acd-8351-153465fd1c4c';
     const OFFICE_COORDS = {
@@ -1647,6 +1651,7 @@
     const backupColors = ['#FF1493', '#00FFFF', '#FF8C00', '#32CD32', '#9370DB', '#20B2AA', '#FF00FF', '#00FF7F', '#00BFFF', '#7FFF00', '#FFD700', '#FF7F50', '#ADFF2F', '#40E0D0', '#DA70D6'];
     let backupColorIndex = 0;
     const routeColors = {};
+
     // --- DATA PROCESSING & UTILITY FUNCTIONS ---
     function filterAndPrepareSchedules(allSchedules) {
       const cleanSchedules = {};
@@ -1813,6 +1818,7 @@
       const day = String(date.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     };
+
     // --- TOOLTIP & COPY FUNCTIONALITY ---
     function generateCleanTextForTooltip(type, data) {
       switch (type) {
@@ -1828,6 +1834,7 @@
           return '';
       }
     }
+
     // --- NEW INTERACTIVE POPUP FUNCTION ---
     function setupInteractivePopup(layer, content, className = 'custom-popup') {
       const popup = L.popup({
@@ -1862,6 +1869,7 @@
         // No need for mouseenter on the popupEl, as matches(':hover') handles it.
       });
     }
+
     // --- MAP & UI RENDERING ---
     const initializeMap = () => {
       if (document.getElementById('map')) {
@@ -2120,6 +2128,7 @@
       }
       requestAnimationFrame(animateAllPolylines);
     };
+
     // --- UI INTERACTIVITY & FOCUS ---
     const highlightRoute = (personId, isHighlighted) => {
       map.dragging.disable();
@@ -2403,6 +2412,7 @@
       });
       if (bounds.isValid()) flyToBounds(bounds);
     };
+
     // --- EXPORT & MODALS ---
     function createPngLegendHTML() {
       const shortenAddress = (addr) => addr ? addr.split(', FL')[0] : 'N/A';
@@ -2846,8 +2856,17 @@
         tableBody.innerHTML += row;
       });
     }
-    // --- APPLICATION INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', () => {
+
+    // --- WRAPPED APPLICATION INITIALIZATION LOGIC (MODIFIED) ---
+    /**
+     * This function contains the main application logic. 
+     * It is called only after the rawData is received from the parent window.
+     */
+    function runApplication(data) {
+      // 1. Assign the received data to the global variable
+      rawData = data;
+
+      // 2. Run the original initialization code
       const {
         cleanSchedules,
         dataIssues
@@ -2859,6 +2878,7 @@
         conflicts: rawData.conflicts || []
       };
       peopleRouteData = processData(appData);
+
       if (initializeMap()) {
         const dateDisplay = document.getElementById('route-date-display');
         dateDisplay.textContent = formatDateForHeader(new Date());
@@ -2868,6 +2888,7 @@
         const infoPanel = document.getElementById('info-panel');
         const menuBtn = document.getElementById('mobile-menu-btn');
         const mapContainer = document.getElementById('map-container');
+
         document.body.addEventListener('click', function(e) {
           if (e.target.classList.contains('copy-tooltip-btn')) {
             const textToCopy = e.target.getAttribute('data-copy-text');
@@ -2879,16 +2900,19 @@
             }).catch(err => console.error('Failed to copy text: ', err));
           }
         });
+
         const updateMenuButtonState = () => {
           const isOpen = legend.classList.contains('is-open') || infoPanel.classList.contains('is-visible');
           menuBtn.classList.toggle('is-active', isOpen);
         };
+
         document.getElementById('exit-focus-btn-map').addEventListener('click', () => {
           exitFocusMode();
           hideInspectorInfo();
         });
         document.addEventListener('keydown', handleKeyDown);
         map.on('click', exitTabFocus);
+
         if (menuBtn && legend) {
           menuBtn.addEventListener('click', e => {
             e.stopPropagation();
@@ -2917,68 +2941,56 @@
         animateAllPolylines();
         setTimeout(fitAllVisibleRoutes, 500);
       }
-    });
-    
-    
- // --- Code to handle communication with the parent page ---
+    }
 
-  // 1. Read data passed in from the parent via URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialUserId = urlParams.get('userId');
-  const initialUserName = urlParams.get('userName');
-  const initialTheme = urlParams.get('theme');
-    
-  console.log("Map Iframe Loaded. Received data from parent:", {
-    userId: initialUserId,
-    userName: initialUserName,
-    theme: initialTheme
-  });
-  
-  // Notify parent that iframe is ready
-  window.addEventListener('DOMContentLoaded', () => {
-    console.log('Iframe loaded, notifying parent it is ready.');
-    window.parent.postMessage({ type: 'iframe-ready' }, '*'); // minimal change
-  
-    // Listen for messages from parent
-    window.addEventListener('message', (event) => {
-      console.log('Iframe received from parent:', event.data);
-    
-      const receivedData = event.data;
-    
-      if (receivedData && receivedData.dealId) {
-        // Update DOM or other logic
-        console.log(`Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`);
-      
-        // Send a response back to parent
-        window.parent.postMessage({
-          type: 'iframe-response',
-          message: 'Iframe successfully received the data!',
-          data: receivedData
-        }, '*');
-      }
-    });
-  });
-  
-  /**
-   * Sends a sample data object back to the parent page.
-   */
-  function sendDataToParent() {
-    console.log("Sending data back to parent page...");
-  
-    const dataToSend = {
-      type: 'mapDataReturn',
-      payload: {
-        summary: "User finished interacting with the map.",
-        visibleRoutes: Object.values(personLayersData).filter(p => p.isVisible).length,
-        totalMiles: document.querySelector('#legend-summary td:nth-child(3)').textContent,
-        timestamp: new Date().toISOString()
-      }
-    };
-  
-    window.parent.postMessage(dataToSend, '*');
-    console.log('Data has been sent back to the main page!');
-  }
+    // --- PARENT COMMUNICATION & APP TRIGGER (MODIFIED) ---
+    window.addEventListener('DOMContentLoaded', () => {
+      console.log('Iframe loaded, notifying parent it is ready to receive data.');
+      // Notify parent that iframe is ready
+      window.parent.postMessage({
+        type: 'iframe-ready'
+      }, '*');
 
+      // Listen for messages from parent
+      window.addEventListener('message', (event) => {
+        console.log('Iframe received a message from parent:', event.data);
+
+        // Check if the message contains the rawData to initialize the map
+        if (event.data && event.data.rawData) {
+          console.log(`Received rawData, initializing application...`);
+          
+          // Run the main application logic with the received data
+          runApplication(event.data.rawData);
+
+          // Send a response back to parent confirming initialization
+          window.parent.postMessage({
+            type: 'iframe-response',
+            message: 'Iframe successfully received the data and initialized!',
+            data: { received: true }
+          }, '*');
+        }
+      });
+    });
+
+    /**
+     * Sends a sample data object back to the parent page.
+     */
+    function sendDataToParent() {
+      console.log("Sending data back to parent page...");
+
+      const dataToSend = {
+        type: 'mapDataReturn',
+        payload: {
+          summary: "User finished interacting with the map.",
+          visibleRoutes: Object.values(personLayersData).filter(p => p.isVisible).length,
+          totalMiles: document.querySelector('#legend-summary td:nth-child(3)').textContent,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      window.parent.postMessage(dataToSend, '*');
+      alert('Data has been sent back to the main page!');
+    }
   </script>
   
 </body>
