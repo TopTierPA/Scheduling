@@ -1,39 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Iframe Page</title>
-</head>
-<body>
-  <h1>Iframe Page</h1>
-  <p id="status">Waiting for parent...</p>
+<h1>Iframe Page</h1>
+<p id="status">Waiting for parent...</p>
 
-  <script>
-    // Notify parent that iframe is ready
-    window.addEventListener('DOMContentLoaded', () => {
-      window.parent.postMessage({ type: 'iframe-ready' }, '*');
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    // Tell parent we are ready
+    window.parent.postMessage({ type: 'iframe-ready' }, '*');
 
-      // Listen for messages from parent
-      window.addEventListener('message', (event) => {
-        // Optional security check
-        // if(event.origin !== 'https://parent-domain.com') return;
+    // Listen for messages from parent
+    window.addEventListener('message', (event) => {
+      console.log('Iframe received from parent:', event.data);
+      const receivedData = event.data;
 
-        console.log('Iframe received from parent:', event.data);
-        const receivedData = event.data;
+      if (receivedData && receivedData.dealId) {
+        document.getElementById('status').textContent =
+          `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
 
-        if (receivedData && receivedData.dealId) {
-          document.getElementById('status').textContent = 
-            `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
-
-          // Send confirmation back to parent
-          window.parent.postMessage({
-            type: 'iframe-log',
-            message: 'Iframe received data successfully',
-            data: receivedData
-          }, '*');
-        }
-      });
+        // Send a response back to parent
+        window.parent.postMessage({
+          type: 'iframe-response',
+          message: 'Iframe successfully received the data!',
+          data: receivedData
+        }, '*');
+      }
     });
-  </script>
-</body>
-</html>
+  });
+</script>
