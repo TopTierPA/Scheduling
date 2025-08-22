@@ -1,27 +1,41 @@
-<h1>Iframe Page</h1>
-<p id="status">Waiting for parent...</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Iframe Page</title>
+</head>
+<body>
+  <h1>Iframe Page</h1>
+  <p id="status">Waiting for parent...</p>
 
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    // Tell parent we are ready
-    window.parent.postMessage({ type: 'iframe-ready' }, '*');
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      // ✅ Notify parent we are ready
+      window.parent.postMessage({ type: 'iframe-ready' }, 'https://toptierpa.github.io/Scheduling/');
 
-    // Listen for messages from parent
-    window.addEventListener('message', (event) => {
-      console.log('Iframe received from parent:', event.data);
-      const receivedData = event.data;
+      // Listen for messages from parent
+      window.addEventListener('message', (event) => {
+        console.log('Iframe received from parent:', event.data, 'origin:', event.origin);
 
-      if (receivedData && receivedData.dealId) {
-        document.getElementById('status').textContent =
-          `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
+        // Only accept messages from parent domain
+        if (event.origin !== 'https://toptierpa.github.io/Scheduling/') return;
 
-        // Send a response back to parent
-        window.parent.postMessage({
-          type: 'iframe-response',
-          message: 'Iframe successfully received the data!',
-          data: receivedData
-        }, '*');
-      }
+        const receivedData = event.data;
+
+        if (receivedData && receivedData.dealId) {
+          document.getElementById('status').textContent =
+            `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
+
+          // ✅ Send response back to parent
+          console.log('Sending response back to parent:', receivedData);
+          window.parent.postMessage({
+            type: 'iframe-response',
+            message: 'Iframe successfully received the data!',
+            data: receivedData
+          }, 'https://toptierpa.github.io/Scheduling/');
+        }
+      });
     });
-  });
-</script>
+  </script>
+</body>
+</html>
