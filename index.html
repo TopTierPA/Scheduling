@@ -158,25 +158,15 @@
       position: relative;
       background-color: #000000;
       padding: 1px 2px 2px 1px;
-      /* padding-left: 2px; */
-      /* padding-bottom: 3px; */
-      /* padding-top: 1px; */
-      /* padding-left: 0; */
       transition: width var(--transition-speed) ease;
       box-shadow: inset 0 0 6px rgb(0 0 0 / 76%);
-      /* background: linear-gradient(360deg, #4a73ff, #151d7d); */
     }
 
     #map {
       position: relative;
-      /* outline-style: inset !important; */
       flex: 1;
       background-color: #000;
       z-index: 1;
-    }
-
-    #map.dark-map-active .leaflet-tile-pane {
-      filter: saturate(135%) brightness(65%) contrast(96%);
     }
 
     .sidebar,
@@ -522,7 +512,6 @@
     #toggle-tooltips-btn.is-active {
       background-color: #2a6eff;
       color: white;
-      /* border-color: #2a3dd1; */
     }
 
     .info-panel-body {
@@ -682,6 +671,14 @@
       background: linear-gradient(0deg, #060e83 0%, #0c19b4 100%);
     }
 
+    .btn-green {
+      background: linear-gradient(0deg, #16a34a 0%, #22c55e 100%);
+    }
+
+    .btn-green:hover {
+      background: linear-gradient(0deg, #15803d 0%, #16a34a 100%);
+    }
+
     .btn-dark {
       background-color: #6c757d;
     }
@@ -771,7 +768,6 @@
       font-size: 1rem !important;
     }
 
-    /* --- STYLES FOR POPUPS (REPLACING TOOLTIPS) --- */
     .tooltip-header {
       display: flex;
       justify-content: space-between;
@@ -808,7 +804,6 @@
       font-weight: 700;
     }
 
-    /* Base popup style to remove leaflet defaults */
     .leaflet-popup-content-wrapper {
       padding: 0;
     }
@@ -817,7 +812,6 @@
       margin: 0;
     }
 
-    /* Main popup style, mimics .custom-tooltip */
     .custom-popup .leaflet-popup-content-wrapper {
       background: #34495e;
       color: #ecf0f1;
@@ -850,7 +844,6 @@
       color: #ffffff !important;
     }
 
-    /* Leg popup style, mimics .leg-tooltip */
     .leg-popup .leaflet-popup-content-wrapper {
       background-color: rgba(20, 20, 20, 0.9);
       color: #f0f0f0;
@@ -869,7 +862,6 @@
 
     .leg-popup .leaflet-popup-close-button {
       display: none;
-      /* Hide close button for leg popups as they close on mouseout */
     }
 
     .leg-tooltip-header,
@@ -1441,7 +1433,7 @@
 </head>
 
 <body>
-  
+
   <div id="app-wrapper">
     <div id="map-header">
       <div class="header-left">
@@ -1469,9 +1461,8 @@
           <div class="control-group">
             <label for="map-style-select">Map Style:</label>
             <select id="map-style-select" onchange="changeMapStyle(this.value)">
-              <option value="streets">Streets</option>
+              <option value="streets" selected>Streets</option>
               <option value="satellite">Satellite</option>
-              <option value="dark" selected>Dark</option>
             </select>
           </div>
           <button id="fitall" onclick="fitAllVisibleRoutes()" class="custom-btn btn-blue">Fit All Visible Routes</button>
@@ -1479,9 +1470,7 @@
             <button onclick="exportCSV()" class="custom-btn btn-blue">Export as CSV</button>
             <button onclick="exportPNG()" class="custom-btn btn-blue">Export as PNG</button>
           </div>
-<!--    sends the data thru iframe    -->
-<button onclick="sendDataToParent()" class="custom-btn btn-dark" style="margin-top: 10px;">Send Data to Main Page</button>
-          
+          <button onclick="sendDataToParent()" class="custom-btn btn-green" style="margin-top: 10px;">Accept Schedule</button>
         </div>
       </div>
 
@@ -1609,20 +1598,15 @@
         </div>
       </div>
     </div>
-<!-- new tag for wrapper -->
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
   <script>
-    // --- DATA SOURCE (MODIFIED) ---
-    // Changed from 'const' to 'let' to allow data to be loaded from postMessage
+    // --- DATA SOURCE ---
     let rawData = {};
 
     // --- GLOBAL VARIABLES & CONSTANTS ---
-    const STADIA_API_KEY = '456a0161-7a8c-4acd-8351-153465fd1c4c';
     const OFFICE_COORDS = {
       lat: 28.6338,
       lng: -81.3685
@@ -1866,7 +1850,6 @@
         popupEl.addEventListener('mouseleave', () => {
           hidePopup();
         });
-        // No need for mouseenter on the popupEl, as matches(':hover') handles it.
       });
     }
 
@@ -1882,26 +1865,20 @@
           position: 'bottomright'
         }).addTo(map);
         schedulerLayerGroup.addTo(map);
-        changeMapStyle('dark');
+        changeMapStyle('streets'); // Default to streets
         return true;
       }
       return false;
     };
     const changeMapStyle = (style) => {
       if (!map) return;
-      const mapEl = document.getElementById('map');
       if (currentMapLayers) currentMapLayers.forEach(layer => map.removeLayer(layer));
       currentMapLayers = [];
-      mapEl.classList.remove('dark-map-active');
       let layerUrl, attribution;
-      if (style === 'dark') {
-        mapEl.classList.add('dark-map-active');
-        layerUrl = `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${STADIA_API_KEY}`;
-        attribution = '© Stadia Maps, © OpenMapTiles, © OSM';
-      } else if (style === 'satellite') {
+      if (style === 'satellite') {
         layerUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
         attribution = '© Esri';
-      } else {
+      } else { // Default to streets
         layerUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
         attribution = '© OpenStreetMap contributors';
       }
@@ -1911,14 +1888,6 @@
       });
       map.addLayer(newLayer);
       currentMapLayers.push(newLayer);
-      Object.values(personLayersData).forEach(data => {
-        const newOpacity = (style === 'dark') ? 0 : 0.4;
-        if (data.legLayers) {
-          data.legLayers.forEach(leg => leg.casing.setStyle({
-            opacity: newOpacity
-          }));
-        }
-      });
     };
     const renderRoutesAndLegend = (appData) => {
       if (!map) return;
@@ -1955,18 +1924,21 @@
         setupInteractivePopup(homeMarker, homePopupContent);
         person.legs.forEach((leg, index) => {
           const legPoints = [leg.origin.locationCoords, leg.destination.locationCoords];
+          // Casing (shadow) polyline
           const casing = L.polyline(legPoints, {
             color: 'black',
-            weight: 4.2,
-            opacity: 0,
+            weight: 5, // Wider than the main line
+            opacity: 0.4, // Semi-transparent for shadow effect
             dashArray: '8, 8'
           }).addTo(group);
+          // Main colored polyline
           const line = L.polyline(legPoints, {
             color: person.color,
             weight: 2.2,
             opacity: 0.9,
             dashArray: '8, 8'
           }).addTo(group);
+          // Invisible hover area
           const hoverArea = L.polyline(legPoints, {
             color: 'transparent',
             weight: 40,
@@ -2136,7 +2108,7 @@
         const ld = personLayersData[pId];
         if (!ld.isVisible) return;
         const opacity = isHighlighted ? (pId === personId ? 1.0 : 0.25) : 0.9;
-        const casingDefaultOpacity = document.getElementById('map-style-select').value === 'dark' ? 0 : 0.4;
+        const casingDefaultOpacity = 0.4;
         const casingOpacity = isHighlighted ? (pId === personId ? 0.5 : 0.1) : casingDefaultOpacity;
         ld.legLayers.forEach(leg => {
           leg.line.setStyle({
@@ -2155,7 +2127,7 @@
         const ld = personLayersData[pId];
         if (!ld.isVisible) return;
         const isThisPerson = pId === personId;
-        const casingDefaultOpacity = document.getElementById('map-style-select').value === 'dark' ? 0 : 0.4;
+        const casingDefaultOpacity = 0.4;
         ld.legLayers.forEach(leg => {
           const isThisSegment = leg.line === segmentLine;
           const opacity = isThisSegment ? 1.0 : 0.25;
@@ -2175,7 +2147,7 @@
       Object.keys(personLayersData).forEach(pId => {
         const ld = personLayersData[pId];
         if (!ld.isVisible) return;
-        const casingOpacity = document.getElementById('map-style-select').value === 'dark' ? 0 : 0.4;
+        const casingOpacity = 0.4;
         ld.legLayers.forEach(leg => {
           leg.line.setStyle({
             opacity: 0.9
@@ -2434,7 +2406,7 @@
       const legendContainer = document.getElementById('png-legend-container');
       const mapContainer = document.getElementById('map-container');
       const originalBg = mapContainer.style.backgroundColor;
-      mapContainer.style.backgroundColor = '#1a1a1a';
+      mapContainer.style.backgroundColor = '#fdfdfd'; // Lighter background for better PNG export
       legendContainer.innerHTML = createPngLegendHTML();
       legendContainer.style.display = 'block';
       try {
@@ -2763,7 +2735,6 @@
             travelToNext = (calculateDistance(newInspectionCoords.lat, newInspectionCoords.lng, nextAppointment.locationCoords.lat, nextAppointment.locationCoords.lng) / AVERAGE_SPEED_MPH) * 60;
             buffer = timeStringToMinutes(nextAppointment.timeEST) - (newInspectionEndTime + travelToNext);
           } else {
-            // If no next appointment, buffer is effectively infinite
             buffer = Infinity;
           }
           if (buffer >= 0) {
@@ -2857,16 +2828,9 @@
       });
     }
 
-    // --- WRAPPED APPLICATION INITIALIZATION LOGIC (MODIFIED) ---
-    /**
-     * This function contains the main application logic. 
-     * It is called only after the rawData is received from the parent window.
-     */
+    // --- WRAPPED APPLICATION INITIALIZATION LOGIC ---
     function runApplication(data) {
-      // 1. Assign the received data to the global variable
       rawData = data;
-
-      // 2. Run the original initialization code
       const {
         cleanSchedules,
         dataIssues
@@ -2943,56 +2907,40 @@
       }
     }
 
-    // --- PARENT COMMUNICATION & APP TRIGGER (MODIFIED) ---
+    // --- PARENT COMMUNICATION & APP TRIGGER ---
     window.addEventListener('DOMContentLoaded', () => {
       console.log('Iframe loaded, notifying parent it is ready to receive data.');
-      // Notify parent that iframe is ready
       window.parent.postMessage({
         type: 'iframe-ready'
       }, '*');
 
-      // Listen for messages from parent
       window.addEventListener('message', (event) => {
         console.log('Iframe received a message from parent:', event.data);
-
-        // Check if the message contains the rawData to initialize the map
         if (event.data && event.data.rawData) {
           console.log(`Received rawData, initializing application...`);
-          
-          // Run the main application logic with the received data
           runApplication(event.data.rawData);
-
-          // Send a response back to parent confirming initialization
           window.parent.postMessage({
             type: 'iframe-response',
             message: 'Iframe successfully received the data and initialized!',
-            data: { received: true }
+            data: {
+              received: true
+            }
           }, '*');
         }
       });
     });
 
     /**
-     * Sends a sample data object back to the parent page.
+     * Sends a confirmation message back to the parent page.
      */
     function sendDataToParent() {
-      console.log("Sending data back to parent page...");
-
-      const dataToSend = {
-        type: 'mapDataReturn',
-        payload: {
-          summary: "User finished interacting with the map.",
-          visibleRoutes: Object.values(personLayersData).filter(p => p.isVisible).length,
-          totalMiles: document.querySelector('#legend-summary td:nth-child(3)').textContent,
-          timestamp: new Date().toISOString()
-        }
-      };
-
-      window.parent.postMessage(dataToSend, '*');
-      alert('Data has been sent back to the main page!');
+      console.log("Sending 'bulk schedule accepted' message to parent page...");
+      window.parent.postMessage({
+        type: 'bulk-schedule-accepted'
+      }, '*');
     }
   </script>
-  
+
 </body>
 
 </html>
