@@ -1,42 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Iframe Page</title>
-</head>
-<body>
-  <h1>Iframe Page</h1>
-  <p id="status">Waiting for parent...</p>
+<p id="status">Waiting for parent...</p>
 
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      // ✅ Notify parent that iframe is ready
-      window.parent.postMessage({ type: 'iframe-ready' }, 'https://toptierpa.github.io');
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('Iframe loaded, notifying parent');
 
-      // Listen for messages from parent
-      window.addEventListener('message', (event) => {
-        console.log('Iframe received from parent:', event.data, 'origin:', event.origin);
+  // TEMP: allow parent from any origin for testing
+  window.parent.postMessage({ type: 'iframe-ready' }, '*');
 
-        // Security: only accept messages from your parent page (replace if hosting elsewhere)
-        if (event.origin !== 'https://toptierpa.github.io') return;
+  window.addEventListener('message', (event) => {
+    console.log('Iframe received message:', event.data, 'from', event.origin);
 
-        const receivedData = event.data;
+    // TEMP: accept all origins for testing
+    // if (event.origin !== 'https://toptierpa.github.io') return;
 
-        if (receivedData && receivedData.dealId) {
-          // Update DOM
-          document.getElementById('status').textContent =
-            `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
+    const data = event.data;
+    if (data && data.dealId) {
+      document.getElementById('status').textContent =
+        `Received dealId: ${data.dealId}, scheduleType: ${data.scheduleType}`;
 
-          // ✅ Send response back to parent
-          console.log('Sending response back to parent:', receivedData);
-          window.parent.postMessage({
-            type: 'iframe-response',
-            message: 'Iframe successfully received the data!',
-            data: receivedData
-          }, 'https://toptierpa.github.io');
-        }
-      });
-    });
-  </script>
-</body>
-</html>
+      console.log('Sending response back to parent', data);
+      window.parent.postMessage({
+        type: 'iframe-response',
+        message: 'Iframe successfully received the data!',
+        data: data
+      }, '*');
+    }
+  });
+});
+</script>
