@@ -10,19 +10,20 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // ✅ Notify parent we are ready
-      window.parent.postMessage({ type: 'iframe-ready' }, 'https://toptierpa.github.io/Scheduling/');
+      // ✅ Notify parent that iframe is ready
+      window.parent.postMessage({ type: 'iframe-ready' }, 'https://toptierpa.github.io');
 
       // Listen for messages from parent
       window.addEventListener('message', (event) => {
         console.log('Iframe received from parent:', event.data, 'origin:', event.origin);
 
-        // Only accept messages from parent domain
-        if (event.origin !== 'https://toptierpa.github.io/Scheduling/') return;
+        // Security: only accept messages from your parent page (replace if hosting elsewhere)
+        if (event.origin !== 'https://toptierpa.github.io') return;
 
         const receivedData = event.data;
 
         if (receivedData && receivedData.dealId) {
+          // Update DOM
           document.getElementById('status').textContent =
             `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
 
@@ -32,7 +33,7 @@
             type: 'iframe-response',
             message: 'Iframe successfully received the data!',
             data: receivedData
-          }, 'https://toptierpa.github.io/Scheduling/');
+          }, 'https://toptierpa.github.io');
         }
       });
     });
