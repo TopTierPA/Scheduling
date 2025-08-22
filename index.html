@@ -2,35 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Parent Page</title>
+  <title>Iframe Page</title>
 </head>
 <body>
-  <h1>Parent Page</h1>
-  <iframe 
-    id="map-iframe" 
-    src="https://your-username.github.io/repository-name/" 
-    style="width: 100%; height: 400px; border: 1px solid black;"
-  ></iframe>
+  <h1>Iframe Page</h1>
+  <p id="status">Waiting for parent...</p>
 
   <script>
-    const mapIframe = document.getElementById('map-iframe');
+    // Notify parent that iframe is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      window.parent.postMessage({ type: 'iframe-ready' }, '*');
 
-    // Listen for messages from the iframe
-    window.addEventListener('message', (event) => {
-      // Optional security check
-      // if (event.origin !== 'https://your-username.github.io') return;
+      // Listen for messages from parent
+      window.addEventListener('message', (event) => {
+        // Optional security check
+        // if(event.origin !== 'https://parent-domain.com') return;
 
-      if (event.data.type === 'iframe-ready') {
-        console.log('Iframe ready! Sending payload...');
-        mapIframe.contentWindow.postMessage(
-          { dealId: '33265', scheduleType: 'single' },
-          '*' // change to iframe origin in production
-        );
-      }
+        console.log('Iframe received from parent:', event.data);
+        const receivedData = event.data;
 
-      if (event.data.type === 'iframe-log') {
-        console.log('Parent received from iframe:', event.data);
-      }
+        if (receivedData && receivedData.dealId) {
+          document.getElementById('status').textContent = 
+            `Received dealId: ${receivedData.dealId}, scheduleType: ${receivedData.scheduleType}`;
+
+          // Send confirmation back to parent
+          window.parent.postMessage({
+            type: 'iframe-log',
+            message: 'Iframe received data successfully',
+            data: receivedData
+          }, '*');
+        }
+      });
     });
   </script>
 </body>
