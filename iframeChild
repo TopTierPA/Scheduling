@@ -1,0 +1,30 @@
+<p id="status">Waiting for parent...</p>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('Iframe loaded, notifying parent');
+
+  // TEMP: allow parent from any origin for testing
+  window.parent.postMessage({ type: 'iframe-ready' }, '*');
+
+  window.addEventListener('message', (event) => {
+    console.log('Iframe received message:', event.data, 'from', event.origin);
+
+    // TEMP: accept all origins for testing
+    // if (event.origin !== 'https://toptierpa.github.io') return;
+
+    const data = event.data;
+    if (data && data.dealId) {
+      document.getElementById('status').textContent =
+        `Received dealId: ${data.dealId}, scheduleType: ${data.scheduleType}`;
+
+      console.log('Sending response back to parent', data);
+      window.parent.postMessage({
+        type: 'iframe-response',
+        message: 'Iframe successfully received the data!',
+        data: data
+      }, '*');
+    }
+  });
+});
+</script>
