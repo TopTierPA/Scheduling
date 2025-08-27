@@ -1679,7 +1679,7 @@
       if (schedule.length === 0) {
         return {
           id,
-          name: inspector.fullName,
+          name: inspector.name,
           color,
           start: inspector.homeCoords,
           stops: [],
@@ -1722,7 +1722,7 @@
       const totalMiles = legs.reduce((sum, leg) => sum + leg.distance, 0);
       return {
         id,
-        name: inspector.fullName,
+        name: inspector.name,
         color,
         start: inspector.homeCoords,
         stops: schedule,
@@ -2293,7 +2293,7 @@
         const stop = leg.destination;
         const startTime12 = formatTime12Hour(stop.timeEST);
         const endTime12 = formatTime12Hour(addMinutes(stop.timeEST, stop.durationMinutes));
-        const lockedToUser = stop.lockedToUser && appData.inspectors[stop.lockedToUser] ? appData.inspectors[stop.lockedToUser].fullName : null;
+        const lockedToUser = stop.lockedToUser && appData.inspectors[stop.lockedToUser] ? appData.inspectors[stop.lockedToUser].name : null;
         stopsHtml += `
                     <div class="stop-card">
                         <div class="stop-header">
